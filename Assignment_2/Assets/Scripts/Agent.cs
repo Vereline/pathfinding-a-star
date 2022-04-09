@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Threading.Tasks;
 
 public class Agent : MonoBehaviour
 {
@@ -33,6 +34,9 @@ public class Agent : MonoBehaviour
     public PathFinder pathFinder;
 
     public float speed = 5F;
+    protected bool isWalking = false;
+    Coroutine routine;
+    Coroutine routine2;
 
     protected virtual void Start()
     {
@@ -57,7 +61,7 @@ public class Agent : MonoBehaviour
         // You will need to replace it / change it
 
         //var destWorld = parentMaze.GetWorldPositionForMazeTile(GameManager.Instance.DestinationTile);
-        
+
         //if(destWorld.x > transform.position.x && parentMaze.IsValidTileOfType(new Vector2Int(CurrentTile.x + 1, CurrentTile.y), MazeTileType.Free))
         //{
         //    transform.Translate(Vector3.right * movementSpeed * Time.deltaTime);
@@ -71,7 +75,7 @@ public class Agent : MonoBehaviour
         // Notice on the player's behavior that using this approach, a new tile is computed for a player
         // as soon as his origin crosses the tile border. Therefore, the player now often stops somehow "in the middle".
         // For this demo code, it does not really matter but just keep this in mind when dealing with movement.
-        //var afterTranslTile = parentMaze.GetMazeTileForWorldPosition(transform.position);
+        CurrentTile = parentMaze.GetMazeTileForWorldPosition(transform.position);
 
         //if(oldTile != afterTranslTile)
         //{
@@ -94,9 +98,9 @@ public class Agent : MonoBehaviour
         //    Debug.Log("Found path");
         //}
 
-        if (CurrentTile != GameManager.Instance.DestinationTile && pathFinder.IsFinished)
+        if (CurrentTile != GameManager.Instance.DestinationTile && pathFinder.IsFinished && !isWalking)
         {
-            HandleMovement();
+            StartMovement();
         }
     }
 
@@ -111,22 +115,59 @@ public class Agent : MonoBehaviour
         {
             pathFinder.StopFindPathCoroutine();
         }
+
+        if (isWalking)
+        {
+            StopMovement();
+        }
+
         pathFinder.ResetCostMaze();
         parentMaze.ResetTileColors();
         pathFinder.FindPath(CurrentTile, newDestinationTile);
     }
 
-    protected void HandleMovement()
+    IEnumerator Moving(Vector2Int tile)
+    {
+        var destWorld = parentMaze.GetWorldPositionForMazeTile(tile);
+
+        while (transform.position != destWorld)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, destWorld, speed * Time.deltaTime);
+            yield return null;
+        }
+
+    }
+
+
+    IEnumerator HandleMovement()
     {
         List<Vector2Int> path = pathFinder.path;
+        isWalking = true;
 
         foreach (var tile in path)
         {
-            var destWorld = parentMaze.GetWorldPositionForMazeTile(tile);
-            transform.position += (destWorld - transform.position).normalized * speed * Time.deltaTime;
-            CurrentTile = tile;
+            //var destWorld = parentMaze.GetWorldPositionForMazeTile(tile);
+            //transform.position += (destWorld - transform.position).normalized * speed * Time.deltaTime;
+            //CurrentTile = tile;
+
+            routine2 = StartCoroutine(Moving(tile));
+            yield return routine2;
         }
-        
+
+        isWalking = false;
+        yield return null;
+    }
+
+    protected void StopMovement()
+    {
+        isWalking = false;
+        StopCoroutine(routine);
+        StopCoroutine(routine2);
+    }
+
+    protected void StartMovement()
+    {
+        routine = StartCoroutine(HandleMovement());
     }
 
     public virtual void InitializeData(Maze parentMaze, float movementSpeed, Vector2Int spawnTilePos)
