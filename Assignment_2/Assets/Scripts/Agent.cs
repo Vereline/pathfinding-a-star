@@ -32,6 +32,8 @@ public class Agent : MonoBehaviour
 
     public PathFinder pathFinder;
 
+    public float speed = 5F;
+
     protected virtual void Start()
     {
         GameManager.Instance.DestinationChanged += OnDestinationChanged;
@@ -54,7 +56,7 @@ public class Agent : MonoBehaviour
         // The code below is just a simple demonstration of some of the functionality / functions
         // You will need to replace it / change it
 
-        var destWorld = parentMaze.GetWorldPositionForMazeTile(GameManager.Instance.DestinationTile);
+        //var destWorld = parentMaze.GetWorldPositionForMazeTile(GameManager.Instance.DestinationTile);
         
         //if(destWorld.x > transform.position.x && parentMaze.IsValidTileOfType(new Vector2Int(CurrentTile.x + 1, CurrentTile.y), MazeTileType.Free))
         //{
@@ -65,11 +67,11 @@ public class Agent : MonoBehaviour
         //    transform.Translate(-Vector3.right * movementSpeed * Time.deltaTime);
         //}
 
-        var oldTile = CurrentTile;
+        //var oldTile = CurrentTile;
         // Notice on the player's behavior that using this approach, a new tile is computed for a player
         // as soon as his origin crosses the tile border. Therefore, the player now often stops somehow "in the middle".
         // For this demo code, it does not really matter but just keep this in mind when dealing with movement.
-        var afterTranslTile = parentMaze.GetMazeTileForWorldPosition(transform.position);
+        //var afterTranslTile = parentMaze.GetMazeTileForWorldPosition(transform.position);
 
         //if(oldTile != afterTranslTile)
         //{
@@ -83,24 +85,48 @@ public class Agent : MonoBehaviour
         //    Debug.Log("YESSS");
         //}
 
-        if (CurrentTile != GameManager.Instance.DestinationTile)
+        //if (CurrentTile != GameManager.Instance.DestinationTile && !pathFinder.IsWorking)
+        //{
+        //    pathFinder.ResetCostMaze();
+        //    parentMaze.ResetTileColors();
+        //    pathFinder.FindPath(CurrentTile, GameManager.Instance.DestinationTile);
+
+        //    Debug.Log("Found path");
+        //}
+
+        if (CurrentTile != GameManager.Instance.DestinationTile && pathFinder.IsFinished)
         {
-            pathFinder.ResetCostMaze();
-            parentMaze.ResetTileColors();
-            List<Vector2Int> path = pathFinder.FindPath(CurrentTile, GameManager.Instance.DestinationTile);
-            foreach (Vector2Int tile in path)
-            {
-                parentMaze.SetFreeTileColor(tile, Color.blue);
-            }
-            Debug.Log("Found path");
+            HandleMovement();
         }
     }
+
 
     // This function is called every time the user sets a new destination using a left mouse button
     protected virtual void OnDestinationChanged(Vector2Int newDestinationTile)
     {
         // TODO Assignment 2 ... this function might be of your interest. :-)
         // The destination tile index is also accessible via GameManager.Instance.DestinationTile
+
+        if (pathFinder.IsWorking)
+        {
+            pathFinder.StopFindPathCoroutine();
+        }
+        pathFinder.ResetCostMaze();
+        parentMaze.ResetTileColors();
+        pathFinder.FindPath(CurrentTile, newDestinationTile);
+    }
+
+    protected void HandleMovement()
+    {
+        List<Vector2Int> path = pathFinder.path;
+
+        foreach (var tile in path)
+        {
+            var destWorld = parentMaze.GetWorldPositionForMazeTile(tile);
+            transform.position += (destWorld - transform.position).normalized * speed * Time.deltaTime;
+            CurrentTile = tile;
+        }
+        
     }
 
     public virtual void InitializeData(Maze parentMaze, float movementSpeed, Vector2Int spawnTilePos)
@@ -118,6 +144,8 @@ public class Agent : MonoBehaviour
 
         isInitialized = true;
 
-        pathFinder = new PathFinder(parentMaze, euclideanHeuristics, nullHeuristics);
+        pathFinder = gameObject.AddComponent<PathFinder>();
+
+        pathFinder.InitializeData(parentMaze, euclideanHeuristics, nullHeuristics);
     }
 }

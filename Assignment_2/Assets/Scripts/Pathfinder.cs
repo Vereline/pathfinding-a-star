@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,7 @@ public class PathFinder : MonoBehaviour
 {
     protected int moveDiagonalCost = 14;
     protected int moveStraigtCost = 10;
+    protected float secondDelay = 0.2F;
 
     public bool euclideanHeuristics = true;
     public bool nullHeuristics = false;
@@ -22,7 +24,26 @@ public class PathFinder : MonoBehaviour
 
     protected List<List<MazeTile>> costMaze;
 
-    public PathFinder(Maze maze, bool euclideanH, bool nullH)
+    protected bool isWorking = false;
+    protected bool isFinished = false;
+    public bool IsWorking
+    {
+        get
+        {
+            return isWorking; 
+        }
+    }
+
+    public bool IsFinished
+    {
+        get
+        {
+            return isFinished;
+        }
+    }
+
+    Coroutine routine;
+    public void InitializeData(Maze maze, bool euclideanH, bool nullH)
     {
         euclideanHeuristics = euclideanH;
         nullHeuristics = nullH;
@@ -36,19 +57,35 @@ public class PathFinder : MonoBehaviour
 
             for (int j = 0; j < parentMaze.MazeTiles[i].Count; j++)
             {
-                //costMaze[i][j] = new MazeTile(new Vector2Int(i, j));
                 MazeTile tile = new MazeTile(new Vector2Int(i, j));
-                
-                Debug.Log("Hashes");
-                Debug.Log(tile.GetHashCode());
                 costMaze[i].Add(tile);
             }
         }
     }
 
-    public List<Vector2Int> FindPath(Vector2Int currentTile, Vector2Int targetTile)
+    public void FindPath(Vector2Int current, Vector2Int target)
+    {
+        currentTile = current;
+        targetTile = target;
+
+        routine = StartCoroutine(FindPathCoroutine());
+
+        //return path;
+    }
+
+    public void StopFindPathCoroutine()
+    {
+        StopCoroutine(routine);
+        isWorking = false;
+        isFinished = false;
+    }
+
+    IEnumerator FindPathCoroutine()
     {
         // Main code
+
+        isWorking = true;
+        isFinished = false;
 
         MazeTile start = costMaze[currentTile.x][currentTile.y];
         MazeTile target = costMaze[targetTile.x][targetTile.y];
@@ -73,10 +110,19 @@ public class PathFinder : MonoBehaviour
                 openSet.Remove(current);
                 closeSet.Add(current);
                 parentMaze.SetFreeTileColor(current.tile, Color.red);
+                yield return new WaitForSeconds(secondDelay);
 
                 if (current.tile == targetTile)
                 {
-                    return RetracePath(start, target);
+                    path = RetracePath(start, target);
+                    foreach (Vector2Int tile in path)
+                    {
+                        parentMaze.SetFreeTileColor(tile, Color.blue);
+                        yield return new WaitForSeconds(secondDelay);
+                    }
+                    isWorking = false;
+                    isFinished = true;
+                    yield break;
                 }
 
                 List<Vector2Int> neighbourTiles = parentMaze.GetNeighbourTiles(current.tile);
@@ -90,17 +136,18 @@ public class PathFinder : MonoBehaviour
                         continue;
                     }
 
-                    int newMovementCostToNeighbour = current.gCost + ComputeHeuristics(current.tile, neighbourTile);
+                    int newMovementCostToNeighbour = current.gCost + ComputeEuclideanHeuristics(current.tile, neighbourTile);
                     if (newMovementCostToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
                     {
                         neighbour.gCost = newMovementCostToNeighbour;
-                        neighbour.hCost = ComputeHeuristics(neighbourTile, targetTile);
+                        neighbour.hCost = ComputeEuclideanHeuristics(neighbourTile, targetTile);
                         neighbour.parentTile = current;
 
                         if (!openSet.Contains(neighbour))
                         {
                             openSet.Add(neighbour);
                             parentMaze.SetFreeTileColor(neighbour.tile, Color.green);
+                            yield return new WaitForSeconds(secondDelay);
                         }
                     }
                 }
@@ -114,10 +161,19 @@ public class PathFinder : MonoBehaviour
                 openSet.Remove(current);
                 closeSet.Add(current);
                 parentMaze.SetFreeTileColor(current.tile, Color.red);
+                yield return new WaitForSeconds(secondDelay);
 
                 if (current.tile == targetTile)
                 {
-                    return RetracePath(start, target);
+                    path = RetracePath(start, target);
+                    foreach (Vector2Int tile in path)
+                    {
+                        parentMaze.SetFreeTileColor(tile, Color.blue);
+                        yield return new WaitForSeconds(secondDelay);
+                    }
+                    isWorking = false;
+                    isFinished = true;
+                    yield break;
                 }
 
                 List<Vector2Int> neighbourTiles = parentMaze.GetNeighbourTiles(current.tile);
@@ -134,48 +190,19 @@ public class PathFinder : MonoBehaviour
                     openSet.Add(neighbour);
                     neighbour.parentTile = current;
                     parentMaze.SetFreeTileColor(neighbour.tile, Color.green);
+                    yield return new WaitForSeconds(secondDelay);
                 }
             }
         } else
         {
             Debug.LogError("None of the heuristics is chosen");
+            yield break;
         }
-
         throw new Exception("Unable to find optimal path");
-    }
-
-    protected int ComputeHeuristics(Vector2Int currentTile, Vector2Int targetTile)
-    {
-        if (euclideanHeuristics)
-        {
-            return this.ComputeEuclideanHeuristics(currentTile, targetTile);
-        }
-        else if (nullHeuristics)
-        {
-            return this.ComputeNullHeuristics(currentTile, targetTile);
-        }
-        else
-        {
-            Debug.LogError("None of the heuristics is chosen");
-        }
-        return 0;
     }
 
     protected int ComputeEuclideanHeuristics(Vector2Int currentTile, Vector2Int targetTile)
     {
-        int distX = Mathf.Abs(currentTile.x - targetTile.x);
-        int distY = Mathf.Abs(currentTile.y - targetTile.y);
-
-        if (distX > distY)
-        {
-            return moveDiagonalCost * distY + moveStraigtCost * (distX - distY);
-        }
-        return moveDiagonalCost * distX + moveStraigtCost * (distY - distX);
-    }
-
-    protected int ComputeNullHeuristics(Vector2Int currentTile, Vector2Int targetTile)
-    {
-        // TODO right now this is as Euclidean - change to normal
         int distX = Mathf.Abs(currentTile.x - targetTile.x);
         int distY = Mathf.Abs(currentTile.y - targetTile.y);
 
@@ -210,6 +237,7 @@ public class PathFinder : MonoBehaviour
             currentTile = currentTile.parentTile;
         }
 
+        path.Add(currentTile.tile);
         path.Reverse();
 
         return path;
