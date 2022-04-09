@@ -24,6 +24,14 @@ public class Agent : MonoBehaviour
     protected Maze parentMaze;
     protected bool isInitialized = false;
 
+    [SerializeField]
+    protected bool euclideanHeuristics = true;
+
+    [SerializeField]
+    protected bool nullHeuristics = false;
+
+    public PathFinder pathFinder;
+
     protected virtual void Start()
     {
         GameManager.Instance.DestinationChanged += OnDestinationChanged;
@@ -48,14 +56,14 @@ public class Agent : MonoBehaviour
 
         var destWorld = parentMaze.GetWorldPositionForMazeTile(GameManager.Instance.DestinationTile);
         
-        if(destWorld.x > transform.position.x && parentMaze.IsValidTileOfType(new Vector2Int(CurrentTile.x + 1, CurrentTile.y), MazeTileType.Free))
-        {
-            transform.Translate(Vector3.right * movementSpeed * Time.deltaTime);
-        } 
-        else if(destWorld.x < transform.position.x && parentMaze.IsValidTileOfType(new Vector2Int(CurrentTile.x - 1, CurrentTile.y), MazeTileType.Free))
-        {
-            transform.Translate(-Vector3.right * movementSpeed * Time.deltaTime);
-        }
+        //if(destWorld.x > transform.position.x && parentMaze.IsValidTileOfType(new Vector2Int(CurrentTile.x + 1, CurrentTile.y), MazeTileType.Free))
+        //{
+        //    transform.Translate(Vector3.right * movementSpeed * Time.deltaTime);
+        //} 
+        //else if(destWorld.x < transform.position.x && parentMaze.IsValidTileOfType(new Vector2Int(CurrentTile.x - 1, CurrentTile.y), MazeTileType.Free))
+        //{
+        //    transform.Translate(-Vector3.right * movementSpeed * Time.deltaTime);
+        //}
 
         var oldTile = CurrentTile;
         // Notice on the player's behavior that using this approach, a new tile is computed for a player
@@ -63,16 +71,28 @@ public class Agent : MonoBehaviour
         // For this demo code, it does not really matter but just keep this in mind when dealing with movement.
         var afterTranslTile = parentMaze.GetMazeTileForWorldPosition(transform.position);
 
-        if(oldTile != afterTranslTile)
-        {
-            parentMaze.SetFreeTileColor(oldTile, Color.red);
-            CurrentTile = afterTranslTile;
-        }
+        //if(oldTile != afterTranslTile)
+        //{
+        //    parentMaze.SetFreeTileColor(oldTile, Color.red);
+        //    CurrentTile = afterTranslTile;
+        //}
 
-        if(CurrentTile == GameManager.Instance.DestinationTile)
+        //if(CurrentTile == GameManager.Instance.DestinationTile)
+        //{
+        //    parentMaze.ResetTileColors();
+        //    Debug.Log("YESSS");
+        //}
+
+        if (CurrentTile != GameManager.Instance.DestinationTile)
         {
+            pathFinder.ResetCostMaze();
             parentMaze.ResetTileColors();
-            Debug.Log("YESSS");
+            List<Vector2Int> path = pathFinder.FindPath(CurrentTile, GameManager.Instance.DestinationTile);
+            foreach (Vector2Int tile in path)
+            {
+                parentMaze.SetFreeTileColor(tile, Color.blue);
+            }
+            Debug.Log("Found path");
         }
     }
 
@@ -97,5 +117,7 @@ public class Agent : MonoBehaviour
         CurrentTile = spawnTilePos;
 
         isInitialized = true;
+
+        pathFinder = new PathFinder(parentMaze, euclideanHeuristics, nullHeuristics);
     }
 }

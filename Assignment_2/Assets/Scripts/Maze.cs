@@ -122,6 +122,34 @@ public class Maze : MonoBehaviour
         }
     }
 
+    public List<Vector2Int> GetNeighbourTiles(Vector2Int tile)
+    {
+        List<Vector2Int> neighbours = new List<Vector2Int>();
+
+        for (int i = -1; i <= 1; i++)
+        {
+            for (int j = -1; j <= 1; j++)
+            {
+                if (i == 0 && j == 0)
+                {
+                    // skip the tile itself
+                    continue;
+                }
+
+                Vector2Int potentialNeighbourTile = new Vector2Int(tile.x + i, tile.y + j);
+
+                if (IsValidTileOfType(potentialNeighbourTile, MazeTileType.Free)) // if tile exists and it's not a wall
+                {
+                    // avoid corners
+                    if (IsValidTileOfType(new Vector2Int(tile.x, tile.y + j), MazeTileType.Free) && IsValidTileOfType(new Vector2Int(tile.x + i, tile.y), MazeTileType.Free))
+                        neighbours.Add(potentialNeighbourTile);
+                }
+            }
+        }
+
+        return neighbours;
+    }
+
     #region Creation & Initialization of a maze. You can probably ignore this code. :-)
 
     public void BuildMaze()
