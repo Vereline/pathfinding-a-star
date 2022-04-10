@@ -147,7 +147,7 @@ public class PathFinder : MonoBehaviour
                         {
                             openSet.Add(neighbour);
                             parentMaze.SetFreeTileColor(neighbour.tile, Color.green);
-                            yield return new WaitForSeconds(secondDelay);
+                            //yield return new WaitForSeconds(secondDelay);
                         }
                     }
                 }
@@ -176,13 +176,13 @@ public class PathFinder : MonoBehaviour
                     yield break;
                 }
 
-                List<Vector2Int> neighbourTiles = parentMaze.GetNeighbourTiles(current.tile);
+                List<Vector2Int> neighbourTiles = parentMaze.GetNeighbourTiles(current.tile, false);
 
                 foreach (Vector2Int neighbourTile in neighbourTiles)
                 {
                     MazeTile neighbour = costMaze[neighbourTile.x][neighbourTile.y];
 
-                    if (!parentMaze.IsValidTileOfType(neighbourTile, MazeTileType.Free) || closeSet.Contains(neighbour))
+                    if (!parentMaze.IsValidTileOfType(neighbourTile, MazeTileType.Free) || closeSet.Contains(neighbour) || openSet.Contains(neighbour))
                     {
                         continue;
                     }
@@ -190,7 +190,7 @@ public class PathFinder : MonoBehaviour
                     openSet.Add(neighbour);
                     neighbour.parentTile = current;
                     parentMaze.SetFreeTileColor(neighbour.tile, Color.green);
-                    yield return new WaitForSeconds(secondDelay);
+                    //yield return new WaitForSeconds(secondDelay);
                 }
             }
         } else

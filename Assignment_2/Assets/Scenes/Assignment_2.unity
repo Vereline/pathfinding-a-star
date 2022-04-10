@@ -398,7 +398,7 @@ MonoBehaviour:
     type: 3}
   wallTileSprite: {fileID: -1596969562936065491, guid: 8d20e529fce601b42aa1dff3040b9136,
     type: 3}
-  mazeDefinition: {fileID: 4900000, guid: 19217e5be587c5f48a3f6524a9070e22, type: 3}
+  mazeDefinition: {fileID: 4900000, guid: b6eb6b8618c473d4f9c6f63e1b14ba8e, type: 3}
   wallTileChar: 35
   freeTileChar: 45
   agentSpawnChar: 65

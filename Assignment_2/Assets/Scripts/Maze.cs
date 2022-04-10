@@ -122,7 +122,7 @@ public class Maze : MonoBehaviour
         }
     }
 
-    public List<Vector2Int> GetNeighbourTiles(Vector2Int tile)
+    public List<Vector2Int> GetNeighbourTiles(Vector2Int tile, bool nullHeuristics = false)
     {
         List<Vector2Int> neighbours = new List<Vector2Int>();
 
@@ -134,6 +134,14 @@ public class Maze : MonoBehaviour
                 {
                     // skip the tile itself
                     continue;
+                }
+
+                if (nullHeuristics)
+                {
+                    if (i != 0 && j != 0) {
+                        // for null heuristics skip diagonal tiles
+                        continue;
+                    }
                 }
 
                 Vector2Int potentialNeighbourTile = new Vector2Int(tile.x + i, tile.y + j);

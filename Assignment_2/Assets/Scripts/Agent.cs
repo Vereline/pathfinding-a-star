@@ -89,15 +89,6 @@ public class Agent : MonoBehaviour
         //    Debug.Log("YESSS");
         //}
 
-        //if (CurrentTile != GameManager.Instance.DestinationTile && !pathFinder.IsWorking)
-        //{
-        //    pathFinder.ResetCostMaze();
-        //    parentMaze.ResetTileColors();
-        //    pathFinder.FindPath(CurrentTile, GameManager.Instance.DestinationTile);
-
-        //    Debug.Log("Found path");
-        //}
-
         if (CurrentTile != GameManager.Instance.DestinationTile && pathFinder.IsFinished && !isWalking)
         {
             StartMovement();
