@@ -44,8 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01622c50c1ed50c49bf6c4038bb902a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  euclideanHeuristics: 0
-  nullHeuristics: 1
+  euclideanHeuristics: 1
+  nullHeuristics: 0
   pathFinder: {fileID: 0}
   speed: 5
 --- !u!212 &1072427023688654173

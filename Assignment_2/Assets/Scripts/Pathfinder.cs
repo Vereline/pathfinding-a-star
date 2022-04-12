@@ -51,16 +51,18 @@ public class PathFinder : MonoBehaviour
 
         costMaze = new List<List<MazeTile>>();
 
-        for (int i = 0; i < parentMaze.MazeTiles.Count; i++)
+        // we assume that maze is always a square or a rectangle
+        for (int i = 0; i < parentMaze.MazeTiles[0].Count; i++)
         {
             costMaze.Add(new List<MazeTile>());
 
-            for (int j = 0; j < parentMaze.MazeTiles[i].Count; j++)
+            for (int j = 0; j < parentMaze.MazeTiles.Count; j++)
             {
                 MazeTile tile = new MazeTile(new Vector2Int(i, j));
                 costMaze[i].Add(tile);
             }
         }
+
     }
 
     public void FindPath(Vector2Int current, Vector2Int target)
@@ -154,7 +156,7 @@ public class PathFinder : MonoBehaviour
             }
         } else if (nullHeuristics)
         {
-            while (openSet.Count > 0 && openSet.Count < 1000)
+            while (openSet.Count > 0)
             {
                 MazeTile current = openSet[0];
 
